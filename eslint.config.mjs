@@ -19,6 +19,7 @@ export default [
         Inject_NetworkHelper: 'readonly',
         Inject_PreferenceHelper: 'readonly',
         Inject_WebViewHelperV2: 'readonly',
+        Inject_OkhttpHelper: 'readonly',
         ArrayList: 'readonly',
         JSLogUtils: 'readonly',
         SourcePreference: 'readonly',
