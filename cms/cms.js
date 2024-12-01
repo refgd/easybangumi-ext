@@ -1,7 +1,7 @@
 // @key refgd.cms
 // @label 资源站通用
-// @versionName 1.0
-// @versionCode 1
+// @versionName 1.1
+// @versionCode 2
 // @libVersion 11
 // @cover https://raw.githubusercontent.com/refgd/easybangumi-ext/refs/heads/main/cms/cms.png
 
@@ -36,52 +36,45 @@ function PageComponent_getMainTabs() {
 function PageComponent_getSubTabs(mainTab) {
     var res = new ArrayList();
     if (mainTab.ext && MainUtil.cates[mainTab.ext]) {
-        MainUtil.cates[mainTab.ext].subs.forEach(function(e) {
-            res.add(new SubTab(e.name, true, e.id));
-        });
+        if(MainUtil.cates[mainTab.ext].subs && MainUtil.cates[mainTab.ext].subs.length > 0){
+            MainUtil.cates[mainTab.ext].subs.forEach(function(e) {
+                res.add(new SubTab(e.name, true, e.id));
+            });
+        }else{
+            res.add(new SubTab('全部', true, MainUtil.cates[mainTab.ext].id));
+        }
     }
     return res;
 }
 
 function PageComponent_getContent(mainTab, subTab, key) {
     var res = new ArrayList();
-    var resp, nextKey = null;
+    var nextKey = null;
 
-    if (mainTab.label == "首页") {
-        resp = MainUtil.getContent("?ac=detail");
-        if(resp.list){
-            resp.list.forEach(function(it) {
-                res.add(makeCartoonCover({
-                    id: it.vod_id,
-                    url: it.vod_id,
-                    title: it.vod_name,
-                    cover: it.vod_pic,
-                    intro: it.vod_remarks
-                }));
-            });
-        }
-    } else if (subTab && subTab.ext) {
-        var path = "?ac=detail&t="+subTab.ext;
-        if(key > 0){
-            path += "&pg=" + key
-        }
-        resp = MainUtil.getContent(path);
-        if(resp.list){
-            resp.list.forEach(function(it) {
-                res.add(makeCartoonCover({
-                    id: it.vod_id,
-                    url: it.vod_id,
-                    title: it.vod_name,
-                    cover: it.vod_pic,
-                    intro: it.vod_remarks
-                }));
-            });
+    var path = "?ac=detail"
+    if (subTab && subTab.ext) {
+        path += "&t="+subTab.ext;
+    }
+    if(key > 0){
+        path += "&pg=" + key
+    }
 
-            var curPage = resp.page ? resp.page: 0
-            var pageCount = resp.pagecount ? resp.pagecount: 0
-            if (curPage < pageCount){
-                nextKey = new java.lang.Integer(parseInt(curPage) + 1);
-            }
+    var resp = MainUtil.getContent(path);
+    if(resp && resp.list){
+        resp.list.forEach(function(it) {
+            res.add(makeCartoonCover({
+                id: it.vod_id,
+                url: it.vod_id,
+                title: it.vod_name,
+                cover: it.vod_pic,
+                intro: Jsoup.parse(it.vod_remarks).text()
+            }));
+        });
+
+        var curPage = resp.page ? resp.page: 0
+        var pageCount = resp.pagecount ? resp.pagecount: 0
+        if (curPage < pageCount){
+            nextKey = new java.lang.Integer(parseInt(curPage) + 1);
         }
     }
 
@@ -112,8 +105,8 @@ function PageComponent_getContent(mainTab, subTab, key) {
                 title: it.vod_name,
                 genreList: genreList,
                 cover: it.vod_pic,
-                intro: it.vod_blurb,
-                description: it.vod_content,
+                intro: Jsoup.parse(it.vod_blurb).text(),
+                description: Jsoup.parse(it.vod_content).text(),
                 updateStrategy: updateStrategy,
                 isUpdate: false,
                 status: status,
@@ -165,7 +158,7 @@ function PageComponent_getContent(mainTab, subTab, key) {
                 url: it.vod_id,
                 title: it.vod_name,
                 cover: it.vod_pic,
-                intro: it.vod_remarks
+                intro: Jsoup.parse(it.vod_remarks).text()
             }));
         });
 
@@ -243,7 +236,7 @@ MainClass.prototype.getVideoCategories = function() {
                     
                     if(!_t.cates['c'+e.type_id]){
                         _t.cates['c'+e.type_id] = {
-                            id: 'c'+e.type_id,
+                            id: e.type_id,
                             name: e.type_name,
                             subs: []
                         }
@@ -253,7 +246,7 @@ MainClass.prototype.getVideoCategories = function() {
                 }else{
                     if(!_t.cates['c'+e.type_pid]){
                         _t.cates['c'+e.type_pid] = {
-                            id: 'c'+e.type_pid,
+                            id: e.type_pid,
                             name: '',
                             subs: []
                         }
