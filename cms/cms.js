@@ -51,7 +51,7 @@ function PageComponent_getContent(mainTab, subTab, key) {
     var res = new ArrayList();
     var nextKey = null;
 
-    var path = "?ac=detail"
+    var path = "?ac=detail&sort_direction=desc"
     if (subTab && subTab.ext) {
         path += "&t="+subTab.ext;
     }
@@ -74,7 +74,7 @@ function PageComponent_getContent(mainTab, subTab, key) {
         var curPage = resp.page ? resp.page: 0
         var pageCount = resp.pagecount ? resp.pagecount: 0
         if (curPage < pageCount){
-            nextKey = new java.lang.Integer(parseInt(curPage) + 1);
+            nextKey = new Packages.java.lang.Integer(parseInt(curPage) + 1);
         }
     }
 
@@ -142,7 +142,7 @@ function PageComponent_getContent(mainTab, subTab, key) {
 
  // Hook SearchComponent ========================================
  function SearchComponent_search(page, keyword) {
-    var path = "?ac=detail&wd="+keyword;
+    var path = "?ac=detail&sort_direction=desc&wd="+keyword;
     if(page > 0){
         path += "&pg=" + page
     }
@@ -165,7 +165,7 @@ function PageComponent_getContent(mainTab, subTab, key) {
         var curPage = resp.page ? resp.page: 0
         var pageCount = resp.pagecount ? resp.pagecount: 0
         if (curPage < pageCount){
-            nextPage = new java.lang.Integer(parseInt(curPage) + 1);
+            nextPage = new Packages.java.lang.Integer(parseInt(curPage) + 1);
         }
     }
 
@@ -193,6 +193,7 @@ function MainClass(){
     this._adUrl = "";
     this._adUa = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
     this.cates = {};
+    this.mainTabs = null;
 }
 
 MainClass.prototype.getBaseUrl = function() {
@@ -222,6 +223,8 @@ MainClass.prototype.removeAd = function(url) {
 };
 
 MainClass.prototype.getVideoCategories = function() {
+    if(this.mainTabs) return this.mainTabs;
+
     var resp = this.getContent("?ac=list");
     var arr = [];
     if(resp){
@@ -257,6 +260,8 @@ MainClass.prototype.getVideoCategories = function() {
                     });
                 }
             });
+
+            this.mainTabs = arr;
         }
     }
     return arr;

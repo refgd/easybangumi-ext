@@ -14,8 +14,7 @@ export default [
     languageOptions: {
       globals: {
         ...globals.browser,
-        java: 'readonly',
-        importClass: 'readonly',
+        Packages: 'readonly',
         Cartoon: 'readonly',
         Inject_NetworkHelper: 'readonly',
         Inject_PreferenceHelper: 'readonly',
@@ -37,6 +36,7 @@ export default [
         makeCartoon: 'readonly',
         PlayLine: 'readonly',
         Episode: 'readonly',
+        Base64: 'readonly',
       }
     }
   },
