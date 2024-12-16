@@ -14,7 +14,7 @@ var preferenceHelper = Inject_PreferenceHelper;
 // Hook PreferenceComponent ========================================
 function PreferenceComponent_getPreference() {
     var res = new ArrayList();
-    var BaseUrl = new SourcePreference.Edit("JSON采集接口", "BaseUrl", "https://cjhwba.com/api.php/provide/vod/?ac=list");
+    var BaseUrl = new SourcePreference.Edit("JSON采集接口", "BaseUrl", "https://json.heimuer.xyz/api.php/provide/vod/?ac=list");
     var AdUrl = new SourcePreference.Edit("去广告接口", "AdUrl", "");
     res.add(BaseUrl);
     res.add(AdUrl);
@@ -25,7 +25,7 @@ function PreferenceComponent_getPreference() {
 function PageComponent_getMainTabs() {
     var res = new ArrayList();
     res.add(new MainTab("首页", MainTab.MAIN_TAB_WITH_COVER));
-    var arr = MainUtil.getVideoCategories();
+    var arr = MainUtil.getMainTabs();
     arr.forEach(function(e) {
         res.add(new MainTab(e.name, MainTab.MAIN_TAB_GROUP, e.id));
     });
@@ -35,13 +35,14 @@ function PageComponent_getMainTabs() {
 
 function PageComponent_getSubTabs(mainTab) {
     var res = new ArrayList();
-    if (mainTab.ext && MainUtil.cates[mainTab.ext]) {
-        if(MainUtil.cates[mainTab.ext].subs && MainUtil.cates[mainTab.ext].subs.length > 0){
-            MainUtil.cates[mainTab.ext].subs.forEach(function(e) {
+    var tab = MainUtil.getMainTab(mainTab.ext);
+    if (tab) {
+        if(tab.subs && tab.subs.length > 0){
+            tab.subs.forEach(function(e) {
                 res.add(new SubTab(e.name, true, e.id));
             });
         }else{
-            res.add(new SubTab('全部', true, MainUtil.cates[mainTab.ext].id));
+            res.add(new SubTab('全部', true, tab.id));
         }
     }
     return res;
@@ -192,8 +193,7 @@ function MainClass(){
     this._baseUrl = "https://cjhwba.com/api.php/provide/vod/?ac=list";
     this._adUrl = "";
     this._adUa = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
-    this.cates = {};
-    this.mainTabs = null;
+    this.cates = null;
 }
 
 MainClass.prototype.getBaseUrl = function() {
@@ -221,51 +221,84 @@ MainClass.prototype.removeAd = function(url) {
     }
     return url;
 };
+MainClass.prototype.getAllCategories = function() {
+    if(this.cates) return this.cates;
+    
+    var _cates = new String(preferenceHelper.get("AllCates", ""));
+    if(_cates == "" || _cates.substring(0, 1) != '['){
+        var resp = this.getContent("?ac=list");
+        if(resp){
+            if(resp.class){
+                var _t = this;
+                _t.cates = [];
 
-MainClass.prototype.getVideoCategories = function() {
-    if(this.mainTabs) return this.mainTabs;
-
-    var resp = this.getContent("?ac=list");
-    var arr = [];
-    if(resp){
-        var _t = this;
-        if(resp.class){
-            resp.class.forEach(function(e) {
-                if(e.type_pid == 0){
-                    arr.push({
-                        id: 'c'+e.type_id,
-                        name: e.type_name,
-                    });
-                    
-                    if(!_t.cates['c'+e.type_id]){
-                        _t.cates['c'+e.type_id] = {
-                            id: e.type_id,
-                            name: e.type_name,
-                            subs: []
+                var _tcates = {}
+                resp.class.forEach(function(e) {
+                    if(e.type_pid == 0){                        
+                        if(!_tcates[e.type_id]){
+                            _tcates[e.type_id] = {
+                                id: e.type_id,
+                                name: e.type_name,
+                                subs: []
+                            }
+                            _t.cates.push(_tcates[e.type_id]);
+                        }else{
+                            _tcates[e.type_id].name = e.type_name;
                         }
                     }else{
-                        _t.cates['c'+e.type_id].name = e.type_name;
-                    }
-                }else{
-                    if(!_t.cates['c'+e.type_pid]){
-                        _t.cates['c'+e.type_pid] = {
-                            id: e.type_pid,
-                            name: '',
-                            subs: []
+                        if(!_tcates[e.type_pid]){
+                            _tcates[e.type_pid] = {
+                                id: e.type_pid,
+                                name: '',
+                                subs: []
+                            }
+                            _t.cates.push(_tcates[e.type_pid]);
                         }
+                        _tcates[e.type_pid].subs.push({
+                            id: e.type_id,
+                            name: e.type_name,
+                        });
                     }
-                    _t.cates['c'+e.type_pid].subs.push({
-                        id: e.type_id,
-                        name: e.type_name,
-                    });
-                }
-            });
+                });
 
-            this.mainTabs = arr;
+                preferenceHelper.put("AllCates", JSON.stringify(_t.cates));
+                return _t.cates;
+            }
+        }
+
+        return []
+    }
+
+    this.cates = JSON.parse(_cates);
+    return this.cates;
+}
+MainClass.prototype.getMainTabs = function() {
+    var arr = [];
+
+    var cates = this.getAllCategories();
+    if(cates){
+        cates.forEach(function(c, k){
+            arr.push({
+                id: k + 1,
+                name: c.name,
+            });
+        });
+    }
+
+    return arr;
+}
+MainClass.prototype.getMainTab = function(ind) {
+    ind = parseInt(ind);
+
+    if(ind > 0){
+        var cates = this.getAllCategories();
+        if(cates && ind <= cates.length){
+            return cates[ind - 1];
         }
     }
-    return arr;
-};
+
+    return null;
+}
 
 MainClass.prototype.getContent = function(path, ua) {
     var url = (path.substring(0, 4) == 'http' ? path : this.getBaseUrl() + path);
