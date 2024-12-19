@@ -37,6 +37,9 @@ export default [
         PlayLine: 'readonly',
         Episode: 'readonly',
         Base64: 'readonly',
+        HashSet: 'readonly',
+        Thread: 'readonly',
+        Log: 'readonly',
       }
     }
   },
