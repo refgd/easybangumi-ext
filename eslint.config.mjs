@@ -40,6 +40,7 @@ export default [
         HashSet: 'readonly',
         Thread: 'readonly',
         Log: 'readonly',
+        HashMap: 'readonly',
       }
     }
   },
