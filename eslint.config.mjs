@@ -34,6 +34,7 @@ export default [
         Jsoup: 'readonly',
         makeCartoonCover: 'readonly',
         makeCartoon: 'readonly',
+        makeTextDanmaku: 'readonly',
         PlayLine: 'readonly',
         Episode: 'readonly',
         Base64: 'readonly',
